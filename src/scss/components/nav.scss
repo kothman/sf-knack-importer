@@ -1,0 +1,15 @@
+.nav {
+    width: 100%;
+    justify-content: center;
+
+    &.nav-pills {
+	.nav-item {
+	    margin-right: 1rem;
+	    
+	    &.previous {
+		background: color('gray');
+		color: color('white');
+	    }    
+	}
+    }
+}

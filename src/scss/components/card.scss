@@ -1,0 +1,7 @@
+.card {
+    .card-body {
+	.row:not(:last-child) {
+	    margin-bottom: 1rem;
+	}
+    }
+}

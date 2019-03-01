@@ -1,0 +1,20 @@
+.table {
+    tr {
+	display: flex;
+	width: 100%;
+	flex-grow: 1;
+	
+	th, td {
+	    display: flex;
+	    width: 50%;
+
+	    .form-group, select {
+		width: 100%;
+	    }
+	}
+    }
+
+    thead th {
+	border-top: none;
+    }
+}

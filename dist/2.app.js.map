@@ -1,0 +1,1 @@
+{"version":3,"sources":["webpack:///./src/html/index.html"],"names":[],"mappings":";;;;;;;;;AAAA,iBAAiB,qBAAuB,gB","file":"2.app.js","sourcesContent":["module.exports = __webpack_public_path__ + \"index.html\";"],"sourceRoot":""}

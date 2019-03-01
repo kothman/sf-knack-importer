@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang='en'>
+    <head>
+	<meta charset='utf-8'>
+	<meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+	<title>Salesforce -> Knack Importer</title>
+	<link rel='stylesheet' href='/styles.app.css'>
+	<link href='https://fonts.googleapis.com/icon?family=Material+Icons'
+	      rel='stylesheet'>
+    </head>
+    <body>
+	<div class='container' id='app' v-cloak>
+	    <div class='row'>
+		<header class='nav nav-pills p-4 mb-5 border-bottom'>
+		    <a v-for='page in pages'
+		       class='nav-item nav-link'
+		       :class='{ active: currentPage == page.title, disabled: !page.active, previous: page.active && currentPage != page.title }'
+		       @click="handleNavClick(page.title)" href='#'>{{ page.title }}</a>
+		</header>
+	    </div>
+	    <div class='row' v-if="currentPage == 'Setup'">
+		<div class='col-sm-6 mb-4'>
+		    <div class='card'>
+			<div class='card-body'>
+			    <h3 class="card-title">
+				Salesforce
+				<i v-if='sf.isAuthorized'
+				   class='material-icons text-success float-right'>check_circle_outline</i>
+			    </h3>
+			    <div class='alert alert-danger' v-if='sf.error'>{{ sf.error }}</div>
+			    <div class='form-group' v-if='sf.isAuthorized'>
+				<label for='access-token'>Access Token</label>
+				<input class='form-control' id='access-token' :value='sf.accessToken' @keydown.prevent @click='function(e) { e.currentTarget.select(); }' >
+			    </div>
+			    <a href='#'
+			       class='btn'
+			       :class='{ "btn-primary": !sf.isAuthorized, "btn-success": sf.isAuthorized }'
+			       @click.prevent='redirectToSFAuth'>{{ sf.isAuthorized ? 'Success' : 'Authorize' }}</a>
+			</div>
+		    </div>
+		</div>
+		
+		<div class='col-sm-6 mb-4'>
+		    <div class='card'>
+			<div class='card-body'>
+			    <h3 class='card-title'>
+				Knack
+				<i v-if='knack.isAuthorized' class='material-icons text-success float-right'>check_circle_outline</i>
+			    </h3>
+			    <div v-if='knack.error'class='alert alert-danger' role='alert'>
+				{{ knack.error }}
+			    </div>
+			    <form @submit.prevent='handleKnackCredentials'>
+				<div class='form-group'>
+				    <label for=''>App ID</label>
+				    <input v-model='knack.appId' type='text' class='form-control'>
+				</div>
+				<div class='form-group'>
+				    <label for=''>API Key</label>
+				    <input v-model='knack.apiKey' type='text' class='form-control'>
+				</div>
+				<button
+				    :class='{ "btn-primary": !knack.isAuthorized, "btn-success": knack.isAuthorized }'
+				    class='btn'
+				    type='submit'>{{ knack.isAuthorized ? 'Success' : 'Authorize' }}</button>
+			    </form>
+			</div>
+		    </div>
+		</div>
+		
+	    </div><!-- end row -->
+	    <div class='row' v-if="currentPage == 'Select Objects'">
+		<div class='col-12'>
+		    <div v-if='objectMappingsRequiredFieldsMissing.length === 0' class='mb-4 row'>
+			<div class='col'>
+			    <a href='#' @click.prevent='advanceToPreview' class='float-right btn btn-primary'>Preview</a>
+			</div>
+		    </div>
+		    <div class='card'>
+			<div class='card-body'>
+			    <div class='alert alert-info' v-if='objectMappingsRequiredFieldsMissing.length > 0'>
+				<p>The following required fields on the Knack object must be mapped to continue.</p>
+				<p><span v-for='(field, index) in objectMappingsRequiredFieldsMissing'>{{ field.name }}{{ index !== objectMappingsRequiredFieldsMissing.length - 1 ? ', ' : '' }}</span></p>
+			    </div>
+			    <div class='alert alert-danger' v-if='objectMappingsError'>{{ objectMappingsError }}</div>
+			    <table class='table'>
+				<thead>
+				    <tr><th>Salesforce</th><th>Knack</th></tr>
+				</thead>
+				<tbody>
+				    <tr class='select-objects'>
+					<th>
+					    <div class='form-group'>
+						<label for='sf-object'>Object</label>
+						<select id='sf-object' name='sf-object' class='form-control' v-model='sf.selectedObject'>
+						    <option value=''>Select an object</option>
+						    <option v-for='object in sf.objects' :value='object.name'>{{ object.label }}</option>
+						</select>
+					    </div>
+					</th>
+					<th>
+					    <div class='form-group'>
+						<label for='knack-object'>Object</label>
+						<select id='knack-object' name='knack-object' class='form-control' v-model='knack.selectedObject'>
+					    	    <option value=''>Select an object</option>
+						    <option v-for='object in knack.objects' :value='object.key'>{{ object.name }}</option>
+						</select>
+					    </div>
+					</th>
+				    </tr>
+				    <tr class='mapping' v-if='sf.selectedObject && knack.selectedObject' v-for='(mapping, index) in objectMappings'>
+					<td>
+					    <select v-model='mapping.sfField' class='form-control'>
+						<option value=''>Select a field</option>
+						<option v-if='sf.selectedObjectFields' v-for='field in sf.selectedObjectFields' :value='field.name'>{{ field.label }}</option>
+					    </select>
+					</td>
+					<td>
+					    <select v-model='mapping.knackField' class='form-control' @change='checkRequiredKnackFieldsMapped'>
+						<option value=''>Select a field</option>
+						<option v-if='knack.selectedObjectFields' v-for='field in knack.selectedObjectFields' :value='field.key'>{{ field.name }} {{ field.required ? '*' : '' }}</option>
+					    </select>
+					    <a href='#'
+					       @click.prevent='removeObjectFieldMapping(index)'
+					       class='btn btn-danger ml-4'
+					       :class='{ disabled: objectMappings.length <= 1 }'
+					       title='Delete mapping'>X</a>
+					</td>
+				    </tr>
+				    <tr class='add-mapping'>
+					<td></td>
+					<td><a href='#' @click.prevent='addObjectFieldMapping' class='btn btn-primary ml-auto'>Add Mapping</a></td>
+				    </tr>
+				</tbody>
+			    </table>
+			</div>
+		    </div>
+		    <div v-if='objectMappingsRequiredFieldsMissing.length === 0' class='mt-4 row'>
+			<div class='col'>
+			    <a href='#' @click.prevent='advanceToPreview' class='float-right btn btn-primary'>Preview</a>
+			</div>
+		    </div>
+		</div>
+	    </div><!-- end row -->
+	    <div class='row' v-if="currentPage == 'Preview'">
+		<div class='col'>
+		    <div class='row mb-4'>
+			<div class='col'>
+			    <a href='#' @click.prevent='advanceToFinalize' class='float-right btn btn-primary'>Import</a>
+			</div>
+		    </div>
+		    <div class='card'>
+			<div class='card-body'>
+			    <p class='card-text'>You're about to import all SF {{ sfSelectedObjectPrettyNamePlural }} into Knack as {{ knackSelectedObjectPrettyName }} objects. Please double check the mappings to ensure everything is in order before importing!</p>
+			    <table class='table'>
+				<thead>
+				    <tr>
+					<th>{{ sfSelectedObjectPrettyName }}</th>
+					<th style='width: auto;'>=></th>
+					<th>{{ knackSelectedObjectPrettyName }}</th>
+				    </tr>
+				</thead>
+				<tbody>
+				    <tr v-for='mapping in objectMappings'>
+					<td>{{ mapping.sfField }} / {{ getSFFieldLabelFromName(mapping.sfField) }}</td>
+					<td style='width: auto;'>=></td>
+					<td>{{ mapping.knackField }} / {{ getKnackFieldNameFromKey(mapping.knackField) }}</td>
+				    </tr>
+				</tbody>
+			    </table>
+			</div>
+		    </div>
+		</div>
+	    </div><!-- end row -->
+	    <div class='row justify-content-center' v-if="currentPage == 'Finalize'">
+		<div v-if='exportInfo.error' class='col-auto'>
+		    <div class='alert alert-danger'>{{ exportInfo.error }}</div>
+		    <div v-if='!exportInfo.finished' class='card'>
+			<div class='card-header'>Exporting Objects from Salesforce</div>
+			<div class='card-body text-center'>
+			    <div class='spinner-border' role='status'>
+				<span class='sr-only'>Loading...</span>
+			    </div>
+			    
+			</div>
+		    </div>
+		</div>
+		<div v-if='exportInfo.sfObjects' class='col'>
+		    <div class='card'>
+			<div class='card-header d-flex align-items-center justify-content-between'>
+			    Progress
+			    <div class='progress ml-4' style='flex-grow: 1;'>
+				<div class='progress-bar'
+				     role='progressbar'
+				     aria-valuenow='75'
+				     aria-valuemin='0'
+				     :aria-valuemax='exportInfo.sfObjects.length'
+				     :class='{
+					    "progress-bar-animated": !importInfo.finished,
+					    "progress-bar-striped": !importInfo.finished
+					    }'
+				     :style='{ width: ((( importInfo.errors.length + importInfo.imported.length ) / exportInfo.sfObjects.length) * 100) + "%" }'></div>
+			    </div>
+			</div>
+			<div class='card-body'>
+			    <div class='row'>
+				<div class='col-1'><i class='material-icons text-success'>check_circle_outline</i></div>
+				<div class='col-11'>Retrieved {{ sfSelectedObjectPrettyNamePlural }}</div>
+			    </div>
+			    <div class='row'>
+				<div class='col-1'>
+				    <div v-if='!importInfo.finished' class='spinner-border spinner-import' role='status'>
+					<span class='sr-only'>Loading...</span>
+				    </div>
+				    <i v-else class='material-icons text-success'>check_circle_outline</i>
+				</div>
+				<div class='col-11'>Importing {{ sfSelectedObjectPrettyNamePlural }} to Knack [{{ importInfo.errors.length + importInfo.imported.length }}/{{ exportInfo.sfObjects.length }}]</div>
+			    </div>
+			    <div class='row'>
+				<div class='col'>
+				    <p class='card-text'>Summary</p>
+				    <div class='row'>
+					<div v-if='importInfo.errors.length !== 0' class='col'>
+					    <div class='card'>
+						<div class='card-header bg-danger text-white'>Errors</div>
+						<div class='card-body'>
+						    {{ importInfo.errors }}
+						</div>
+					    </div>
+					</div>
+					<div v-if='importInfo.imported.length !== 0' class='col'>
+					    <div class='card'>
+						<div class='card-header bg-primary text-white'>Imported</div>
+						<div class='card-body'>
+						    <ul>
+							<li v-for='sobject in importInfo.imported'>
+							    <a :href='sf.instanceUrl + "/" + sobject.Id' target='_blank'>
+								{{ sobject.Id }}
+							    </a>
+							</li>
+						    </ul>
+						</div>
+					    </div>
+					</div>
+				    </div>
+				</div>
+			    </div>
+			</div>
+		    </div>
+		</div>
+	    </div><!-- end row -->
+	    <footer class='row'>
+		<nav class='nav nav-pills mx-auto p-5'>
+		    <a @click.prevent='clearLocalStorage' href='#' class='nav-item nav-link active bg-danger'>Clear Session</a>
+		</nav>
+	    </footer>
+	</div>
+    </body>
+    <script src='app.js'></script>
+</html>
