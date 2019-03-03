@@ -3,8 +3,6 @@ import * as AT from './actionTypes';
 import * as ST from './stateTypes';
 import * as MT from './mutationTypes';
 
-import $ from 'jquery';
-
 export default {
     [AT.SAVE_TO_LOCAL_STORAGE] (context) {
 	C.PERSIST_KEYS.forEach( (key) => {
