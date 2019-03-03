@@ -19,7 +19,7 @@
     "watch": "webpack --watch",
     "build": "webpack",
     "start": "node server.js",
-    "test": "mocha-webpack -w --webpack-config webpack.config.js --require src/js/test/setup.js src/js/test/test*.js"
+    "test": "mocha-webpack -w --webpack-config test.webpack.config.js --require src/js/test/setup.js src/js/test/test*.js"
   },
   "devDependencies": {
     "@babel/core": "^7.3.4",
@@ -35,6 +35,7 @@
     "jquery": "^3.3.1",
     "jsdom": "^13.2.0",
     "jsdom-global": "^3.0.2",
+    "lodash": "^4.17.11",
     "mini-css-extract-plugin": "^0.5.0",
     "mocha": "6.0.2",
     "mocha-loader": "^2.0.1",

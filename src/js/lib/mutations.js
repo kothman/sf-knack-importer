@@ -7,14 +7,15 @@ export default {
 	state[ST.MOUNTED] = true;
     },
     [MT.SET_CURRENT_PAGE] (state, pageTitle) {
-	state[ST.CURRENT_PAGE] = pageTitle;
+	if (state[ST.PAGES].find( (p) => { return p.title === pageTitle; }))
+	    state[ST.CURRENT_PAGE] = pageTitle;
+	else
+	    throw new Error("No page exists with title '" + pageTitle + "'");
     },
     [MT.SET_PAGE_ACTIVE] (state, pageTitle) {
 	let page = state[ST.PAGES].find( (p) => {
 	    return p.title === pageTitle;
 	});
-	console.log(page);
-	console.log('Setting page active');
 	if (page)
 	    page.active = true;
 	else
@@ -31,7 +32,7 @@ export default {
 
     },
     [MT.RESET_KNACK_AUTH] (state) {
-	state.isAuthorized = false;
+	state[ST.KNACK].authorized = false;
     },
     [MT.RESTORE_FROM_LOCAL_STORAGE] (state) {
 	console.log('restoring from local storage', state);
@@ -44,8 +45,12 @@ export default {
 
     /* SF */
     [MT.STORE_VALID_SF_CREDENTIALS] (state, credentials) {
-	state[ST.SF].accessToken = credentials.accessToken;
-	state[ST.SF].instanceUrl = credentials.instanceUrl;
+	if ( credentials.accessToken && credentials.instanceUrl) {
+	    state[ST.SF].accessToken = credentials.accessToken;
+	    state[ST.SF].instanceUrl = credentials.instanceUrl;
+	} else {
+	    throw new Error('Invalid SF credentials')
+	}
     },
     [MT.SET_SF_AUTHORIZED] (state, isAuthorized) {
 	state[ST.SF].authorized = isAuthorized;

@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
+const _ = require('lodash');
 
-import State from '../lib/state';
 import Getters from '../lib/getters';
 import Actions from '../lib/actions';
 import Mutations from '../lib/mutations';
@@ -11,6 +11,15 @@ import * as AT from '../lib/actionTypes';
 import * as MT from '../lib/mutationTypes';
 
 import * as C from '../lib/constants';
+
+// Can't include in setup.js, need webpack to compile required file.
+const OriginalState = require('../lib/state');
+
+// return a new copy of the original state, for when we're going to mutate the state
+function getOriginalState () {
+    return _.cloneDeep(OriginalState);
+}
+
 
 before('setup', function() {
     // runs before all tests in this block
@@ -29,6 +38,8 @@ afterEach('after each test', function() {
 });
 
 describe('Store', function() {
+    let state = getOriginalState();
+    
     beforeEach('store test', function() {
 	
     });
@@ -38,12 +49,12 @@ describe('Store', function() {
 	
 	it('should have all types listed in stateTypes.js', function() {
 	    Object.keys(ST).forEach( (type) => {
-		assert.isNotNull(State[type], 'Key ' + type + ' exists on state');
+		assert.isNotNull(state[type], 'Key ' + type + ' exists on state');
 	    });
 	    
 	});
 	specify('pages should be an array of objects with the keys \'title\' and \'active\'', function() {
-	    let pages = State[ST.PAGES];
+	    let pages = state[ST.PAGES];
 	    assert.isArray(pages);
 	    pages.forEach( (page) => {
 		assert.isObject(page);
@@ -55,15 +66,15 @@ describe('Store', function() {
 	    
 	});
 	specify('initial value of mounted should be false', function() {
-	    assert.isFalse(State[ST.MOUNTED]);
+	    assert.isFalse(state[ST.MOUNTED]);
 	    
 	});
 	specify('initial current page should be first page', function() {
-	    assert.equal(State[ST.CURRENT_PAGE], State[ST.PAGES][0].title);
+	    assert.equal(state[ST.CURRENT_PAGE], state[ST.PAGES][0].title);
 	    
 	});
 	specify('initial knack state is empty', function() {
-	    let knack = State[ST.KNACK];
+	    let knack = state[ST.KNACK];
 	    assert.isFalse(knack.error);
 	    assert.isFalse(knack.authorized);
 	    assert.isEmpty(knack.appId);
@@ -80,7 +91,7 @@ describe('Store', function() {
 	    
 	});
 	specify('initial sf state is empty', function() {
-	    let sf = State[ST.SF];
+	    let sf = state[ST.SF];
 	    assert.isFalse(sf.accessToken);
 	    assert.isFalse(sf.instanceUrl);
 	    assert.isFalse(sf.error);
@@ -93,7 +104,7 @@ describe('Store', function() {
 	    
 	});
 	it('should have empty object mapping with sfField and knackField', function() {
-	    let mappings = State[ST.OBJECT_MAPPINGS];
+	    let mappings = state[ST.OBJECT_MAPPINGS];
 	    assert.isArray(mappings);
 	    assert.lengthOf(mappings, 1);
 	    let mapping = mappings[0];
@@ -104,28 +115,28 @@ describe('Store', function() {
 	    
 	});
 	it('object mappings error should be false', function() {
-	    assert.isFalse(State[ST.OBJECT_MAPPINGS_ERROR]);
+	    assert.isFalse(state[ST.OBJECT_MAPPINGS_ERROR]);
 	    
 	});
 	it('object mappings required fields missing should be empty array', function() {
-	    let requiredFieldsMissing = State[ST.OBJECT_MAPPINGS_REQUIRED_FIELDS_MISSING];
+	    let requiredFieldsMissing = state[ST.OBJECT_MAPPINGS_REQUIRED_FIELDS_MISSING];
 	    assert.isEmpty(requiredFieldsMissing);
 	    assert.isArray(requiredFieldsMissing);
 	    
 	});
 	it('import/export started should be false', function() {
-	    assert.isFalse(State[ST.IMPORT_EXPORT_STARTED]);
+	    assert.isFalse(state[ST.IMPORT_EXPORT_STARTED]);
 	    
 	});
 	it('export info should be empty', function() {
-	    let exportInfo = State[ST.EXPORT_INFO];
+	    let exportInfo = state[ST.EXPORT_INFO];
 	    assert.isFalse(exportInfo.error);
 	    assert.isFalse(exportInfo.finished);
 	    assert.isFalse(exportInfo.sfObjects);
 	    
 	});
 	it('import info should be empty', function() {
-	    let importInfo = State[ST.IMPORT_INFO];
+	    let importInfo = state[ST.IMPORT_INFO];
 	    assert.isEmpty(importInfo.errors);
 	    assert.isArray(importInfo.errors);
 	    assert.isEmpty(importInfo.imported);
@@ -185,7 +196,7 @@ describe('Store', function() {
     });
 
     describe('Actions', function() {
-	let state = require('../lib/state');
+	let state = getOriginalState();
 	let context = {
 	    state: state,
 	    commit: (mutationType, payload) => {
@@ -203,24 +214,24 @@ describe('Store', function() {
 	    });
 	    Actions[AT.SAVE_TO_LOCAL_STORAGE](context);
 	    Object.keys(C.PERSIST_KEYS).forEach( (key) => {
-		assert.equal(State[key], window.localStorage.getItem(key));
+		assert.equal(state[key], window.localStorage.getItem(key));
 	    });
 	});
 	it('should progress page if needed', function() {	    
 	    let progress = Actions[AT.PROGRESS_PAGE_IF_NEEDED];
 	    progress(context);
-	    assert.equal(State[ST.CURRENT_PAGE], 'Setup');
+	    assert.equal(state[ST.CURRENT_PAGE], 'Setup');
 	    context.state[ST.PAGES][1].active = true;
 	    context.state[ST.PAGES][2].active = true;
 	    context.state[ST.PAGES][3].active = true;
 	    progress(context);
-	    assert.equal(State[ST.CURRENT_PAGE], 'Finalize');
+	    assert.equal(state[ST.CURRENT_PAGE], 'Finalize');
 	    context.state[ST.PAGES][3].active = false;
 	    progress(context);
-	    assert.equal(State[ST.CURRENT_PAGE], 'Preview');
+	    assert.equal(state[ST.CURRENT_PAGE], 'Preview');
 	    context.state[ST.PAGES][2].active = false;
 	    progress(context);
-	    assert.equal(State[ST.CURRENT_PAGE], 'Select Objects');
+	    assert.equal(state[ST.CURRENT_PAGE], 'Select Objects');
 	});
 	it('should clear local storage', function() {
 	    Actions[AT.SAVE_TO_LOCAL_STORAGE](context);
@@ -237,7 +248,7 @@ describe('Store', function() {
 
 	beforeEach('reset state', function() {
 	    // State will be mutated over course of testing mutations, need to reset before each test
-	    state = require('../lib/state');
+	    state = getOriginalState();
 	});
 	
 	it('should have all types listed in mutationTypes.js', function() {
@@ -253,7 +264,140 @@ describe('Store', function() {
 	    assert.isTrue(state[ST.MOUNTED]);
 	});
 	it('should set current page', function() {
+	    let setPage = Mutations[MT.SET_CURRENT_PAGE];
+	    setPage(state, 'Setup');
+	    assert.equal(state[ST.CURRENT_PAGE], 'Setup');
+	    setPage(state, 'Finalize')
+	    assert.equal(state[ST.CURRENT_PAGE], 'Finalize');
+	    assert.throw(() => { setPage(state, 'Not A Page');}, "No page exists with title 'Not A Page'");
+	});
+	it('should set page active', function() {
+	    let setActive = Mutations[MT.SET_PAGE_ACTIVE];
+	    assert.isTrue(state[ST.PAGES][0].active);
+	    setActive(state, 'Setup');
+	    assert.isTrue(state[ST.PAGES][0].active);
+	    assert.isFalse(state[ST.PAGES][1].active);
+	    assert.isFalse(state[ST.PAGES][2].active);
+	    assert.isFalse(state[ST.PAGES][3].active);
+	    setActive(state, 'Finalize');
+	    assert.isTrue(state[ST.PAGES][3].active);
+	    assert.throw(() => { setActive(state, 'Not A Page');}, "No page exists with title 'Not A Page'");
+	});
+	it('should set page inactive', function() {
+	    let setInactive = Mutations[MT.SET_PAGE_INACTIVE];
+	    let setActive = Mutations[MT.SET_PAGE_ACTIVE];
+	    assert.isFalse(state[ST.PAGES][1].active);
+	    setInactive(state, 'Select Objects');
+	    assert.isFalse(state[ST.PAGES][1].active);
+	    setActive(state, 'Select Objects');
+	    setInactive(state, 'Select Objects');
+	    assert.isFalse(state[ST.PAGES][1].active);
+	    assert.throws(() => {setInactive(state, 'Not A Page');}, "No page exists with title 'Not A Page'");
+	});
+	it('should set Knack auth to false', function() {
+	    assert.isFalse(state[ST.KNACK].authorized);
+	    Mutations[MT.RESET_KNACK_AUTH](state);
+	    assert.isFalse(state[ST.KNACK].authorized);
+	    state[ST.KNACK].authorized = true;
+	    Mutations[MT.RESET_KNACK_AUTH](state);
+	    assert.isFalse(state[ST.KNACK].authorized);
+	});
+	it('should restore from local storage', function() {
+	    // @todo implement test
+	});
+	it('should store SF credentials', function() {
+	    let storeCreds = Mutations[MT.STORE_VALID_SF_CREDENTIALS];
+	    let creds = {
+		accessToken: '12345',
+		instanceUrl: 'https://www.instance.com'
+	    };
+	    assert.isFalse(state[ST.SF].instanceUrl);
+	    assert.isFalse(state[ST.SF].accessToken);
+	    storeCreds(state, creds);
+	    assert.equal(state[ST.SF].accessToken, '12345');
+	    assert.equal(state[ST.SF].instanceUrl, 'https://www.instance.com');
+	    assert.throws(() => {storeCreds(state, {});}, 'Invalid SF credentials');
+	});
+	it('should set SF authorized', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set SF err', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set SF objects', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set SF selected object', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set SF selected object fields', function() {
+	    assert.fail('@todo - implement test');
+	});
 
+	it('should store Knack credentials', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set Knack authorized', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set Knack err', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set Knack objects', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set Knack selected object', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set Knack selected object fields', function() {
+	    assert.fail('@todo - implement test');
+	});
+
+	it('should add an empty object field mapping', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should remove an object field mapping for the given index', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set object mappings error', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set object mappings required fields missing', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should reset Knack field mappings', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should reset SF field mappings', function() {
+	    assert.fail('@todo - implement test');
+	});
+
+	it('should set import/export started', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set import finished', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should push import error', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should push imported object', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should reset import state', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set export finished', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set export error', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should set export SF objects', function() {
+	    assert.fail('@todo - implement test');
+	});
+	it('should reset export state', function() {
+	    assert.fail('@todo - implement test');
 	});
     });
 });
