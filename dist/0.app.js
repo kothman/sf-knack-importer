@@ -2391,19 +2391,13 @@ __webpack_require__.r(__webpack_exports__);
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.CHECK_REQUIRED_KNACK_FIELDS_MAPPED = exports.FETCH_KNACK_OBJECT_FIELDS = exports.FETCH_SF_OBJECT_FIELDS = exports.CLEAR_LOCAL_STORAGE = exports.PROGRESS_PAGE_IF_NEEDED = exports.SAVE_TO_LOCAL_STORAGE = void 0;
+exports.CLEAR_LOCAL_STORAGE = exports.PROGRESS_PAGE_IF_NEEDED = exports.SAVE_TO_LOCAL_STORAGE = void 0;
 const SAVE_TO_LOCAL_STORAGE = 'SAVE_TO_LOCAL_STORAGE';
 exports.SAVE_TO_LOCAL_STORAGE = SAVE_TO_LOCAL_STORAGE;
 const PROGRESS_PAGE_IF_NEEDED = 'PROGRESS_PAGE_IF_NEEDED';
 exports.PROGRESS_PAGE_IF_NEEDED = PROGRESS_PAGE_IF_NEEDED;
 const CLEAR_LOCAL_STORAGE = 'CLEAR_LOCAL_STORAGE';
 exports.CLEAR_LOCAL_STORAGE = CLEAR_LOCAL_STORAGE;
-const FETCH_SF_OBJECT_FIELDS = 'FETCH_SF_OBJECT_FIELDS';
-exports.FETCH_SF_OBJECT_FIELDS = FETCH_SF_OBJECT_FIELDS;
-const FETCH_KNACK_OBJECT_FIELDS = 'FETCH_KNACK_OBJECT_FIELDS';
-exports.FETCH_KNACK_OBJECT_FIELDS = FETCH_KNACK_OBJECT_FIELDS;
-const CHECK_REQUIRED_KNACK_FIELDS_MAPPED = 'CHECK_REQUIRED_KNACK_FIELDS_MAPPED';
-exports.CHECK_REQUIRED_KNACK_FIELDS_MAPPED = CHECK_REQUIRED_KNACK_FIELDS_MAPPED;
 
 /***/ }),
 
@@ -2429,10 +2423,6 @@ var AT = _interopRequireWildcard(__webpack_require__(/*! ./actionTypes */ "./src
 var ST = _interopRequireWildcard(__webpack_require__(/*! ./stateTypes */ "./src/js/lib/stateTypes.js"));
 
 var MT = _interopRequireWildcard(__webpack_require__(/*! ./mutationTypes */ "./src/js/lib/mutationTypes.js"));
-
-var _jquery = _interopRequireDefault(__webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = Object.defineProperty && Object.getOwnPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : {}; if (desc.get || desc.set) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } } newObj.default = obj; return newObj; } }
 
